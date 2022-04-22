@@ -78,12 +78,6 @@ public class EncryptedPrivateKeyInfo {
         throws IOException {
         if (encoded == null) {
             throw new NullPointerException("the encoded parameter " +
-<<<<<<< HEAD
-                                           "must be non-null");
-        }
-        this.encoded = encoded.clone();
-        DerValue val = new DerValue(this.encoded);
-=======
                 "must be non-null");
         }
 
@@ -92,7 +86,6 @@ public class EncryptedPrivateKeyInfo {
         if (val.tag != DerValue.tag_Sequence) {
             throw new IOException("DER header error: no SEQ tag");
         }
->>>>>>> upstream/master
 
         DerValue[] seq = new DerValue[2];
 
