@@ -860,8 +860,13 @@ class Thread implements Runnable {
      * This method is called by the system to give a Thread
      * a chance to clean up before it actually exits.
      */
+<<<<<<< HEAD
     void exit() {
         if (TerminatingThreadLocal.REGISTRY.isPresent()) {
+=======
+    private void exit() {
+        if (threadLocals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
+>>>>>>> upstream/master
             TerminatingThreadLocal.threadTerminated();
         }
         if (group != null) {
