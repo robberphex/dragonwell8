@@ -132,6 +132,7 @@ AgentLibraryList Arguments::_agentList;
 abort_hook_t     Arguments::_abort_hook         = NULL;
 exit_hook_t      Arguments::_exit_hook          = NULL;
 vfprintf_hook_t  Arguments::_vfprintf_hook      = NULL;
+bool             Arguments::_running_from_java  = JNI_FALSE;
 
 
 SystemProperty *Arguments::_java_ext_dirs = NULL;
@@ -2787,6 +2788,12 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs* args) {
     return result;
   }
 
+  // Parse DRAGONWELL_JAVA_OPTIONS environment variable (if present)
+  result = parse_dragonwell_options_environment_variable(&scp, &scp_assembly_required);
+  if (result != JNI_OK) {
+    return result;
+  }
+
   // Parse JavaVMInitArgs structure passed in
   result = parse_each_vm_init_arg(args, &scp, &scp_assembly_required, Flag::COMMAND_LINE);
   if (result != JNI_OK) {
@@ -3766,8 +3773,21 @@ jint Arguments::parse_java_options_environment_variable(SysClassPath* scp_p, boo
 }
 
 jint Arguments::parse_java_tool_options_environment_variable(SysClassPath* scp_p, bool* scp_assembly_required_p) {
+  const int OPTION_BUFFER_SIZE = 1024;
+  char buffer[OPTION_BUFFER_SIZE];
+  if (os::getenv("DRAGONWELL_JAVA_TOOL_OPTIONS_JDK_ONLY", buffer, sizeof(buffer))) {
+    if (Arguments::is_running_from_java()) {
+      return parse_options_environment_variable("JAVA_TOOL_OPTIONS", scp_p,
+                                                  scp_assembly_required_p);
+    }
+    return JNI_OK;
+  }
   return parse_options_environment_variable("JAVA_TOOL_OPTIONS", scp_p,
                                             scp_assembly_required_p);
+}
+jint Arguments::parse_dragonwell_options_environment_variable(SysClassPath* scp_p, bool* scp_assembly_required_p) {
+  return parse_options_environment_variable("DRAGONWELL_JAVA_OPTIONS", scp_p,
+                                              scp_assembly_required_p);
 }
 
 jint Arguments::parse_options_environment_variable(const char* name, SysClassPath* scp_p, bool* scp_assembly_required_p) {
