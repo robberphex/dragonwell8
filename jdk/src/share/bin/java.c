@@ -103,7 +103,7 @@ static jboolean ParseArguments(int *pargc, char ***pargv,
                                int *pmode, char **pwhat,
                                int *pret, const char *jrepath);
 static jboolean InitializeJVM(JavaVM **pvm, JNIEnv **penv,
-                              InvocationFunctions *ifn);
+                              InvocationFunctions *ifn, jboolean runFromJava_);
 static jstring NewPlatformString(JNIEnv *env, char *s);
 static jclass LoadMainClass(JNIEnv *env, int mode, char *name);
 static jclass GetApplicationClass(JNIEnv *env);
@@ -361,6 +361,7 @@ JavaMain(void * _args)
     int mode = args->mode;
     char *what = args->what;
     InvocationFunctions ifn = args->ifn;
+    jboolean runFromJava_ = JNI_FALSE;
 
     JavaVM *vm = 0;
     JNIEnv *env = 0;
@@ -375,7 +376,11 @@ JavaMain(void * _args)
 
     /* Initialize the virtual machine */
     start = CounterGet();
-    if (!InitializeJVM(&vm, &env, &ifn)) {
+    runFromJava_ = runFromJava;
+    if (printVersion) {
+        runFromJava_ = JNI_FALSE;
+    }
+    if (!InitializeJVM(&vm, &env, &ifn, runFromJava_)) {
         JLI_ReportErrorMessage(JVM_ERROR1);
         exit(1);
     }
@@ -1216,7 +1221,7 @@ ParseArguments(int *pargc, char ***pargv,
  * finished.
  */
 static jboolean
-InitializeJVM(JavaVM **pvm, JNIEnv **penv, InvocationFunctions *ifn)
+InitializeJVM(JavaVM **pvm, JNIEnv **penv, InvocationFunctions *ifn, jboolean runFromJava_)
 {
     JavaVMInitArgs args;
     jint r;
@@ -1239,7 +1244,7 @@ InitializeJVM(JavaVM **pvm, JNIEnv **penv, InvocationFunctions *ifn)
                    i, args.options[i].optionString);
     }
 
-    ifn->SetRunningFromJava(runFromJava);
+    ifn->SetRunningFromJava(runFromJava_);
     r = ifn->CreateJavaVM(pvm, (void **)penv, &args);
     JLI_MemFree(options);
     return r == JNI_OK;
